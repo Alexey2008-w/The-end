@@ -11,23 +11,23 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    автор = serializers.PrimaryKeyRelatedField(source='author', read_only=True)
-    текст = serializers.CharField(source='text')
-    создано_в = serializers.DateTimeField(source='created_at')
+    autor = serializers.PrimaryKeyRelatedField(source='author', read_only=True)
+    text = serializers.CharField(source='text')
+    created_in = serializers.DateTimeField(source='created_at')
 
     class Meta:
         model = Comment
-        fields = ['автор', 'текст', 'создано_в']
+        fields = ['author', 'text', 'created_in']
 
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
-    количество_лайков = serializers.SerializerMethodField()
+    number_of_likes = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = ['id', 'text', 'image', 'created_at', 'author', 'comments', 'количество_лайков']
 
-    def get_количество_лайков(self, obj):
+    def get_number_of_likes(self, obj):
         return obj.likes.count()
