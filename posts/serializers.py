@@ -9,25 +9,46 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username']
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Like
+        fields = ['id', 'user', 'created_at']
+        read_only_fields = ['user', 'created_at']
+
 
 class CommentSerializer(serializers.ModelSerializer):
-    autor = serializers.PrimaryKeyRelatedField(source='author', read_only=True)
-    text = serializers.CharField(source='text')
-    created_in = serializers.DateTimeField(source='created_at')
+    author = UserSerializer(read_only=True)
+    text = serializers.CharField()
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['author', 'text', 'created_in']
+        fields = ['id', 'author', 'text', 'created_at']
+        read_only_fields = ['author', 'created_at']
 
 
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
-    number_of_likes = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    liked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'text', 'image', 'created_at', 'author', 'comments', 'количество_лайков']
+        fields = [
+            'id', 'author', 'text', 'image',
+            'created_at', 'updated_at',
+            'comments', 'likes_count', 'liked_by_user'
+        ]
+        read_only_fields = ['author', 'created_at', 'updated_at']
 
-    def get_number_of_likes(self, obj):
+    def get_likes_count(self, obj):
         return obj.likes.count()
+
+    def get_liked_by_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
